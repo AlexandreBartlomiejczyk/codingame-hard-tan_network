@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+"""
+Adapt the project to codingame's IDE formatting, by merging all source files in a single print to stdout.
+The former will also contain an interface to the puzzle, in order to run in the online IDE.
+
+Usage: coding_formatter
+       Runs without any options, but is expected to be called from an unaltered checkout of the project.
+
+Note: This script's implementation is really simple (hard-coded file copy order, bad performance,
+      lack of granularity), and improving it could be an interesting project, but is also not critically needed now.
+"""
+import os
+
+source_file_names = ["utils.py", "graph.py", "tan_network.py", "main.py"]
+
+puzzle_interface_string = "\n".join(["\n\nstart_point = input()",
+                                     "goal_point = input()",
+                                     "stops = []",
+                                     "routes = []\n",
+
+                                     "stops_count = int(input())",
+                                     "for i in range(stops_count):",
+                                     "    stops.append(input())\n",
+
+                                     "routes_count = int(input())",
+                                     "for i in range(routes_count):",
+                                     "    routes.append(input())\n",
+
+                                     "solution = solve_puzzle(start_point, goal_point, stops, routes)",
+                                     "print(solution)\n"])
+
+
+if __name__ == "__main__":
+    this_file_dir = os.path.dirname(__file__)
+
+    source_lines_to_copy = []
+    import_lines_to_copy = set()
+
+    for file_name in source_file_names:
+        file_path = os.path.join(this_file_dir, "..", "src", file_name)
+        consecutive_blank_lines_count = 0
+        with open(file_path, "r") as file_stream:
+            for line in file_stream.readlines():
+                if "import" in line and "src." in line:
+                    continue
+                elif "import" in line:
+                    import_lines_to_copy.add(line)
+                elif line.startswith('"""'):
+                    continue
+                elif line == "\n" and consecutive_blank_lines_count == 2:
+                    continue
+                else:
+                    if line == "\n":
+                        consecutive_blank_lines_count += 1
+                    elif consecutive_blank_lines_count != 0 and line != "\n":
+                        consecutive_blank_lines_count = 0
+
+                    source_lines_to_copy.append(line)
+
+    lines_to_print = sorted(list(import_lines_to_copy))
+    lines_to_print.extend(source_lines_to_copy)
+    lines_to_print.append(puzzle_interface_string)
+
+    print("".join(lines_to_print))
